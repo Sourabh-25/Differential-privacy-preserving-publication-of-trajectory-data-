@@ -61,7 +61,7 @@ def write_trajectories_to_file(trajectories, filename):
 
 trajectories = []
 
-# Generate 100 trajectories
+# Generate 50 new trajectories
 for i in range(150, 200):
     trajectory_id = i
     trajectory = []
