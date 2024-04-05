@@ -1,4 +1,43 @@
 import numpy as np
+import os
+
+trajectories = {}
+
+# Read the updated database file
+with open("output_database_updated.txt", 'r') as input_file:
+    for line in input_file:
+        parts = line.strip().split(',')
+        id = int(parts[0])
+        cluster_number = int(parts[2])
+        
+        # Append cluster_number to trajectories[id]
+        if id in trajectories:
+            trajectories[id].append(cluster_number)
+        else:
+            trajectories[id] = [cluster_number]
+
+# Count occurrences of each trajectory
+trcnt = {}
+tc=[]
+for trajectory in trajectories.values():
+    trajectory_str = ','.join(map(str, trajectory))
+    if trajectory_str in trcnt:
+        trcnt[trajectory_str] += 1
+    else:
+        trcnt[trajectory_str] = 1
+
+# Print trajectories and their counts
+i=0
+for i in range(150, 200):
+    if str(trajectories[i]) in trcnt:
+        trcnt[str(trajectories[i])] = 0
+i=0
+for trajectory, count in trcnt.items():
+    i+=1
+    # print(f"Trajectory: {trajectory}, Count: {count}")
+    tc.append(count)
+print(i)
+
 
 def compute_average(data):
     return np.mean(data)
@@ -40,60 +79,27 @@ def differentially_private_noise_generation(tc, alpha, beta):
                    break
 
     return nc
-# Define the array to store the last entries
-tc = []
 
-# Read each line from the file and extract the last entry
-with open("released_database.txt", 'r') as file:
-    for line in file:
-        parts = line.strip().split(',')
-        # print(parts)
-        if parts[-1].strip():  # Check if the last entry is not empty
-            last_entry = int(parts[-1])
-            if(last_entry==0):
-               tc.append(0.0)
-            else:
-            #  print(last_entry)  # Extract the last entry and convert it to an integer
-              tc.append(last_entry)  # Append it to the tc array
-
-# Print the tc array
+nc=differentially_private_noise_generation(tc,0,2)
 print(len(tc))
-# print("Last entries stored in tc array:")
-# print (tc)
+# print(nc)
+# Write trcnt dictionary to a file
+i=0
+with open("trajectory_publication.txt", 'w') as output_file:
+    for trajectory, count in trcnt.items():
+        output_file.write(f"Trajectory: {trajectory} { i}, Count: {nc[i]}\n")
+        i+=1
+print("Trajectory counts written to 'trajectory_counts.txt'.")
 
+# Specify the file paths to delete
+file_paths = ["output_database.txt", "released_database.txt","output_database_updated.txt"]
 
-alpha = 0
-beta = 1.1
-nc = differentially_private_noise_generation(tc, alpha, beta)
-# print(len(result))
-# print(result)
-def truncate_float(float_number, decimal_places):
-    multiplier = 10 ** decimal_places
-    return int(float_number * multiplier) / multiplier
-
-def append_to_each_line(filename):
-    i=0
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-
-    with open(filename, 'w') as file:
-        for line in lines:
-           
-            line = line.strip() +" "+ str(truncate_float(nc[i],3))+"\n"
-            i+=1
-            file.write(line)
-
-# Call the function to append ", 1" to each line in the file
-filename="released_database.txt"
-with open(filename, 'r') as file:
- lines = file.readlines()
-
- with open(filename, 'w') as file:
-        for line in lines:
-            entries = line.split(",")
-        # Remove the last entry
-            entries = entries[:-1]
-        # Join the remaining entries with commas and write to the output file
-            file.write(",".join(entries) + "\n")
-append_to_each_line("released_database.txt")
-
+# Delete each file
+for file_path in file_paths:
+    try:
+        os.remove(file_path)
+        print(f"File '{file_path}' deleted successfully.")
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found.")
+    except Exception as e:
+        print(f"An error occurred while deleting '{file_path}': {e}")
